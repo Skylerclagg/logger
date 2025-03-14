@@ -1,16 +1,15 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'setwelcomemessage',
-  userPerms: ['manageChannels'], // adjust as needed
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the welcome message (use {user} for mention).',
-  examples: '!setwelcomemessage Welcome {user}! Please verify.',
+  examples: `!setwelcomemessage Welcome {user}! Please verify.`,
   category: 'Configuration',
   func: async interaction => {
-    // Get the provided message from options (assumes options are an array with objects {name, value})
     const option = interaction.data.options.find(o => o.name === 'message');
-    if (!option) return interaction.createMessage({ content: 'You must provide a message.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    if (!option) {
+      return interaction.createMessage({ content: 'You must provide a message.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
     const newMessage = option.value;
     let config;
     try {
@@ -26,6 +25,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ welcome_message: newMessage });
     }
     return interaction.createMessage({ content: `Welcome message set to:\n${newMessage}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

@@ -1,6 +1,7 @@
-const ERIS_CONSTANTS = require('eris').Constants
+const ERIS_CONSTANTS = require('eris').Constants;
 
 exports.commands = [
+  // Original commands
   {
     name: 'ping',
     description: 'Is the bot still alive? Find out using this!'
@@ -97,7 +98,7 @@ exports.commands = [
         type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.CHANNEL,
         name: 'channel',
         description: 'Stop logging any events in the given channel',
-        channel_types: [0, 2, 4] // text, voice, category
+        channel_types: [0, 2, 4]
       },
       {
         type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.STRING,
@@ -260,25 +261,50 @@ exports.commands = [
         ]
       }
     ]
-  }
-]
+  },
 
-exports.developerCommands = [{
-  name: 'setcmds',
-  description: '[OWNER ONLY] set logger commands',
-  options: [{
-    type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.STRING,
-    name: 'scope',
-    description: '[OWNER ONLY] scope of commands to set',
-    choices: [{
-      name: 'Guild',
-      value: 'guild'
-    }, {
-      name: 'Global',
-      value: 'global'
-    }]
-  }]
-}, {
-  name: 'reloadinteractions',
-  description: '[OWNER ONLY] reload interaction handling logic'
-}]
+  // New commands from Python integration
+  { name: 'setwelcomemessage', description: 'Set welcome message; use {user} for mention.' },
+  { name: 'setdm', description: 'Enable or disable DM verification.' },
+  { name: 'dmmessage', description: 'Set DM welcome message; use {user} for mention.' },
+  { name: 'setwelcomechannel', description: 'Set channel for welcome messages.' },
+  { name: 'setrolegiven', description: 'Set role to assign to new users.' },
+  { name: 'settimeoutaction', description: 'Set action on verification timeout (kick, restrict, or remind).' },
+  { name: 'settimeoutlimit', description: 'Set overall verification timeout (e.g., 1d, 1h, 1m, 30s).' },
+  { name: 'setreminderinterval', description: 'Set reminder interval (e.g., 1d, 1h, 1m, 30s).' },
+  { name: 'setremindermessage', description: 'Set the reminder message (use {user} for mention).' },
+  { name: 'configwelcomechannel', description: 'Configure welcome channel permissions and exclusions.' },
+  { name: 'addmodrole', description: 'Add a mod role.' },
+  { name: 'removemodrole', description: 'Remove a mod role.' },
+  { name: 'listmodroles', description: 'List mod roles.' },
+  { name: 'perms', description: 'Manage permissions for role and channel commands.' },
+  { name: 'giverole', description: 'Assign a role to a user (permission controlled).' },
+  { name: 'removerole', description: 'Remove a role from a user (permission controlled).' },
+  { name: 'addusertochannel', description: 'Add a user to a channel (permission controlled).' },
+  { name: 'removeuserfromchannel', description: 'Remove a user from a channel (permission controlled).' },
+  { name: 'manualverify', description: 'Manually verify a member (updates nickname and assigns verified role).' },
+  { name: 'verifyall', description: 'Start verification process for all members without the verified role.' },
+  { name: 'configstatus', description: 'Show current server configuration settings.' }
+];
+
+exports.developerCommands = [
+  {
+    name: 'setcmds',
+    description: '[OWNER ONLY] set logger commands',
+    options: [
+      {
+        type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.STRING,
+        name: 'scope',
+        description: '[OWNER ONLY] scope of commands to set',
+        choices: [
+          { name: 'Guild', value: 'guild' },
+          { name: 'Global', value: 'global' }
+        ]
+      }
+    ]
+  },
+  {
+    name: 'reloadinteractions',
+    description: '[OWNER ONLY] reload interaction handling logic'
+  }
+];

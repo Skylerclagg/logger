@@ -1,11 +1,9 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'setwelcomechannel',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the channel for welcome messages.',
-  examples: '!setwelcomechannel #welcome',
+  examples: `!setwelcomechannel #welcome`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'channel');
@@ -25,6 +23,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ welcome_channel: channelId });
     }
     return interaction.createMessage({ content: `Welcome channel set to: <#${channelId}>`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

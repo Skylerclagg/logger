@@ -9,11 +9,8 @@ function parseTime(input) {
 }
 module.exports = {
   name: 'settimeoutlimit',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the overall verification timeout limit.',
-  examples: '!settimeoutlimit 1h',
+  examples: `!settimeoutlimit 1h`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'time');
@@ -34,6 +31,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ timeout_limit: seconds });
     }
     return interaction.createMessage({ content: `Timeout limit set to ${seconds} seconds.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

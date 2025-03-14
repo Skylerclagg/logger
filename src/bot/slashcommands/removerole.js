@@ -1,11 +1,12 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'removerole',
   userPerms: ['manageRoles'],
   botPerms: ['manageRoles'],
   noThread: false,
   quickHelp: 'Removes a role from a user (permission controlled).',
-  examples: '!removerole @Role @User',
+  examples: `!removerole @Role @User`,
   category: 'Management',
   func: async interaction => {
     const roleOption = interaction.data.options.find(o => o.name === 'role');

@@ -1,11 +1,9 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'setremindermessage',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the reminder message (use {user} for mention).',
-  examples: '!setremindermessage Reminder {user}, please verify!',
+  examples: `!setremindermessage Reminder {user}, please verify!`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'message');
@@ -25,6 +23,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ reminder_message: newMessage });
     }
     return interaction.createMessage({ content: `Reminder message set to:\n${newMessage}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

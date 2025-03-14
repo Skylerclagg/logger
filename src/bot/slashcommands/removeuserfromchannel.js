@@ -1,11 +1,12 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'removeuserfromchannel',
   userPerms: ['manageChannels'],
   botPerms: ['manageChannels'],
   noThread: false,
   quickHelp: 'Removes a user from a channel by modifying view permissions.',
-  examples: '!removeuserfromchannel #general @User',
+  examples: `!removeuserfromchannel #general @User`,
   category: 'Management',
   func: async interaction => {
     const channelOption = interaction.data.options.find(o => o.name === 'channel');

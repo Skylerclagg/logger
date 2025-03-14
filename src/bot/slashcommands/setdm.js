@@ -1,11 +1,9 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'setdm',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Enables or disables DM verification.',
-  examples: '!setdm true',
+  examples: `!setdm true`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'enabled');
@@ -27,6 +25,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ dm_enabled: enabled });
     }
     return interaction.createMessage({ content: `DM verification has been ${enabled ? 'enabled' : 'disabled'}.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

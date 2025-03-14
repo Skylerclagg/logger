@@ -1,15 +1,13 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'settimeoutaction',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the action on verification timeout (kick, restrict, or remind).',
-  examples: '!settimeoutaction remind',
+  examples: `!settimeoutaction remind`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'action');
-    if (!option) return interaction.createMessage({ content: 'You must provide an action (kick, restrict, remind).', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    if (!option) return interaction.createMessage({ content: 'You must provide an action.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     const action = option.value.toLowerCase();
     if (!['kick', 'restrict', 'remind'].includes(action)) {
       return interaction.createMessage({ content: 'Invalid action. Use kick, restrict, or remind.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
@@ -28,6 +26,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ timeout_action: action });
     }
     return interaction.createMessage({ content: `Timeout action set to **${action}**.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

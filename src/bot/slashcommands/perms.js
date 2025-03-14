@@ -1,21 +1,20 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'perms',
   userPerms: ['manageChannels'],
   botPerms: ['sendMessages'],
   noThread: false,
   quickHelp: 'Manages permissions for role and channel commands.',
-  examples: '!perms allow @User giverole @Role',
+  examples: `!perms allow @User giverole @Role`,
   category: 'Management',
   func: async interaction => {
-    // Expected options: action, user, command, and value (role for role commands, channel for channel commands)
-    const actionOption = interaction.data.options.find(o => o.name === 'action');
+    const action = interaction.data.options.find(o => o.name === 'action')?.value?.toLowerCase();
     const userOption = interaction.data.options.find(o => o.name === 'user');
     const commandOption = interaction.data.options.find(o => o.name === 'command');
-    if (!actionOption || !userOption || !commandOption) {
+    if (!action || !userOption || !commandOption) {
       return interaction.createMessage({ content: 'Missing required options.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    const action = actionOption.value.toLowerCase();
     const targetId = userOption.value;
     const commandName = commandOption.value.toLowerCase();
     let permValue;
@@ -47,7 +46,7 @@ module.exports = {
         console.error(err);
         return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
       }
-      const valueDisplay = permValue === 0 ? 'all channels' : `<@&${permValue}>` || `<#${permValue}>`;
+      const valueDisplay = permValue === 0 ? 'all channels' : `<@&${permValue}>`;
       return interaction.createMessage({ content: `Granted permission: <@${targetId}> can now ${commandName} ${valueDisplay}.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
     } else if (action === 'deny') {
       if (userPerms.includes(permValue)) {
@@ -59,7 +58,7 @@ module.exports = {
           console.error(err);
           return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
         }
-        const valueDisplay = permValue === 0 ? 'all channels' : `<@&${permValue}>` || `<#${permValue}>`;
+        const valueDisplay = permValue === 0 ? 'all channels' : `<@&${permValue}>`;
         return interaction.createMessage({ content: `Revoked permission: <@${targetId}> can no longer ${commandName} ${valueDisplay}.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
       } else {
         return interaction.createMessage({ content: 'That permission was not set for the user.', flags: Eris.Constants.MessageFlags.EPHEMERAL });

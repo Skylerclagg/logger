@@ -1,11 +1,9 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'setrolegiven',
-  userPerms: ['manageChannels'],
-  botPerms: ['manageRoles'],
-  noThread: false,
-  quickHelp: 'Sets the role to assign to new users upon verification.',
-  examples: '!setrolegiven @Verified',
+  quickHelp: 'Sets the verified role to assign to new users.',
+  examples: `!setrolegiven @Verified`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'role');
@@ -25,6 +23,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ role_given: roleId });
     }
     return interaction.createMessage({ content: `Verified role set to: <@&${roleId}>`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

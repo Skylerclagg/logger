@@ -1,11 +1,9 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'dmmessage',
-  userPerms: ['manageChannels'],
-  botPerms: ['sendMessages'],
-  noThread: false,
   quickHelp: 'Sets the DM welcome message (use {user} for mention).',
-  examples: '!dmmessage Hello {user}, welcome!',
+  examples: `!dmmessage Hello {user}, welcome!`,
   category: 'Configuration',
   func: async interaction => {
     const option = interaction.data.options.find(o => o.name === 'message');
@@ -25,6 +23,9 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    if (global.bot.guildSettingsCache && global.bot.guildSettingsCache[interaction.guildID]) {
+      global.bot.guildSettingsCache[interaction.guildID].updateCustomSettings({ dm_welcome_message: newMessage });
     }
     return interaction.createMessage({ content: `DM welcome message set to:\n${newMessage}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
   }

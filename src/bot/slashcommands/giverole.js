@@ -1,11 +1,12 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'giverole',
   userPerms: ['manageRoles'],
   botPerms: ['manageRoles'],
   noThread: false,
   quickHelp: 'Assigns a role to a user (permission controlled).',
-  examples: '!giverole @Role @User',
+  examples: `!giverole @Role @User`,
   category: 'Management',
   func: async interaction => {
     const roleOption = interaction.data.options.find(o => o.name === 'role');

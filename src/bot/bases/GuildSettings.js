@@ -26,6 +26,13 @@ class GuildSettings {
 
     global.bot.guildSettingsCache[data.id] = this // someday, this will be replaced because it's dumb
   }
+  updateCustomSettings(newSettings) {
+    // Merge newSettings with existing customSettings without overwriting unmentioned keys.
+    this.customSettings = Object.assign({}, this.customSettings, newSettings);
+    // Optionally, recache the guild to update any other parts of your system
+    this.recache();
+  }
+  
 
   getEventLogID (eventName) {
     return this.event_logs[eventName]

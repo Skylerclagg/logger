@@ -1,15 +1,18 @@
 const Eris = require('eris');
+
 module.exports = {
   name: 'manualverify',
   userPerms: ['manageRoles'],
   botPerms: ['manageRoles'],
   noThread: false,
-  quickHelp: 'Manually verifies a member by updating nickname and assigning the verified role.',
-  examples: '!manualverify @User John Doe',
+  quickHelp: 'Manually verifies a member (updates nickname and assigns verified role).',
+  examples: `!manualverify @User John Doe`,
   category: 'Verification',
   func: async interaction => {
     const memberOption = interaction.data.options.find(o => o.name === 'member');
-    if (!memberOption) return interaction.createMessage({ content: 'You must specify a member.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    if (!memberOption) {
+      return interaction.createMessage({ content: 'You must specify a member.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
     const targetId = memberOption.value;
     const fullName = interaction.data.options.find(o => o.name === 'fullname')?.value;
     const guild = global.bot.guilds.get(interaction.guildID);
@@ -22,9 +25,13 @@ module.exports = {
       console.error(err);
       return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    if (!config.role_given) return interaction.createMessage({ content: 'Verified role is not configured. Use setrolegiven.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    if (!config.role_given) {
+      return interaction.createMessage({ content: 'Verified role is not configured. Use setrolegiven.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
     const verifiedRole = guild.roles.get(config.role_given);
-    if (!verifiedRole) return interaction.createMessage({ content: 'Verified role not found.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    if (!verifiedRole) {
+      return interaction.createMessage({ content: 'Verified role not found.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
     if (fullName) {
       try {
         await target.edit({ nick: fullName });
