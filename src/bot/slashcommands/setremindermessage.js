@@ -1,32 +1,31 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('setremindermessage')
-    .setDescription('Set the reminder message for verification; use {user} for mention.')
-    .addStringOption(option =>
-      option.setName('message')
-        .setDescription('The reminder message to use')
-        .setRequired(true)),
-  async execute(interaction, { redisClient }) {
+  name: 'setremindermessage',
+  userPerms: ['manageChannels'],
+  botPerms: ['sendMessages'],
+  noThread: false,
+  quickHelp: 'Sets the reminder message (use {user} for mention).',
+  examples: '!setremindermessage Reminder {user}, please verify!',
+  category: 'Configuration',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'message');
+    if (!option) return interaction.createMessage({ content: 'You must provide a reminder message.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const newMessage = option.value;
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    config.reminder_message = interaction.options.getString('message');
+    config.reminder_message = newMessage;
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Reminder message set to:\n${config.reminder_message}`, ephemeral: true });
-  },
-  quickHelp: 'Sets the reminder message (use {user} for mention).',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}setremindermessage Reminder {user}, please verify!\``,
-  category: 'Configuration'
+    return interaction.createMessage({ content: `Reminder message set to:\n${newMessage}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

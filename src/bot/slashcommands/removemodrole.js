@@ -1,37 +1,35 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('removemodrole')
-    .setDescription('Remove a mod role.')
-    .addRoleOption(option =>
-      option.setName('role')
-        .setDescription('Role to remove from mod roles')
-        .setRequired(true)),
-  async execute(interaction, { redisClient }) {
+  name: 'removemodrole',
+  userPerms: ['manageChannels'],
+  botPerms: ['manageRoles'],
+  noThread: false,
+  quickHelp: 'Removes a mod role.',
+  examples: '!removemodrole @ModRole',
+  category: 'Management',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'role');
+    if (!option) return interaction.createMessage({ content: 'You must specify a role.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const roleId = option.value;
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
     config.mod_roles = config.mod_roles || [];
-    const role = interaction.options.getRole('role');
-    if (!config.mod_roles.includes(role.id)) {
-      return interaction.reply({ content: 'This role is not in the mod roles list.', ephemeral: true });
+    if (!config.mod_roles.includes(roleId)) {
+      return interaction.createMessage({ content: 'This role is not in the mod roles list.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    config.mod_roles = config.mod_roles.filter(rid => rid !== role.id);
+    config.mod_roles = config.mod_roles.filter(id => id !== roleId);
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Removed mod role: ${role.toString()}`, ephemeral: true });
-  },
-  quickHelp: 'Removes a mod role.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}removemodrole @Mod\``,
-  category: 'Management'
+    return interaction.createMessage({ content: `Removed mod role: <@&${roleId}>`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

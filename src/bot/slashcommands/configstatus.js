@@ -1,20 +1,25 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('configstatus')
-    .setDescription('Show current server configuration settings.'),
-  async execute(interaction, { redisClient }) {
+  name: 'configstatus',
+  userPerms: [],
+  botPerms: [],
+  noThread: false,
+  quickHelp: 'Displays current server configuration settings.',
+  examples: '!configstatus',
+  category: 'Utility',
+  func: async interaction => {
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
     const embed = {
       title: 'Server Configuration',
+      color: 3447003,
+      timestamp: new Date(),
       fields: [
         { name: 'Welcome Message', value: config.welcome_message || 'Not set', inline: false },
         { name: 'Welcome Channel', value: config.welcome_channel ? `<#${config.welcome_channel}>` : 'Not set', inline: true },
@@ -25,13 +30,8 @@ module.exports = {
         { name: 'Timeout Action', value: config.timeout_action || 'remind', inline: true },
         { name: 'Timeout Limit', value: config.timeout_limit ? `${config.timeout_limit} seconds` : 'Not set', inline: true },
         { name: 'Reminder Interval', value: config.reminder_interval ? `${config.reminder_interval} seconds` : 'Not set', inline: true }
-      ],
-      color: 3447003,
-      timestamp: new Date()
+      ]
     };
-    await interaction.reply({ embeds: [embed], ephemeral: true });
-  },
-  quickHelp: 'Displays current configuration for the server.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}configstatus\``,
-  category: 'Utility'
+    return interaction.createMessage({ embed, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

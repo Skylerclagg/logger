@@ -1,5 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 function parseTime(input) {
   const num = parseInt(input.replace(/\D/g, ''));
   if (isNaN(num)) return null;
@@ -8,37 +7,34 @@ function parseTime(input) {
   if (input.endsWith('m')) return num * 60;
   return num;
 }
-
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('setreminderinterval')
-    .setDescription('Set reminder interval (e.g., 1d, 1h, 1m, 30s).')
-    .addStringOption(option =>
-      option.setName('interval')
-        .setDescription('Reminder interval (formats: 1d, 1h, 1m, 30s)')
-        .setRequired(true)),
-  async execute(interaction, { redisClient }) {
-    const input = interaction.options.getString('interval');
-    const seconds = parseTime(input);
-    if (!seconds) return interaction.reply({ content: 'Invalid interval format.', ephemeral: true });
+  name: 'setreminderinterval',
+  userPerms: ['manageChannels'],
+  botPerms: ['sendMessages'],
+  noThread: false,
+  quickHelp: 'Sets the interval between reminder messages.',
+  examples: '!setreminderinterval 30m',
+  category: 'Configuration',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'interval');
+    if (!option) return interaction.createMessage({ content: 'You must provide an interval.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const seconds = parseTime(option.value);
+    if (!seconds) return interaction.createMessage({ content: 'Invalid interval format.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
     config.reminder_interval = seconds;
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Reminder interval set to ${seconds} seconds.`, ephemeral: true });
-  },
-  quickHelp: 'Sets the interval between reminder messages.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}setreminderinterval 30m\``,
-  category: 'Configuration'
+    return interaction.createMessage({ content: `Reminder interval set to ${seconds} seconds.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

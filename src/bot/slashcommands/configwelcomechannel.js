@@ -1,51 +1,42 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('configwelcomechannel')
-    .setDescription('Configure welcome channel permissions.')
-    .addRoleOption(option =>
-      option.setName('negativerole')
-        .setDescription('Role to be denied view outside the welcome channel')
-        .setRequired(true))
-    .addRoleOption(option =>
-      option.setName('positiverole')
-        .setDescription('Role to be allowed view in the welcome channel')
-        .setRequired(true))
-    .addChannelOption(option =>
-      option.setName('welcomechannel')
-        .setDescription('The welcome channel')
-        .setRequired(true))
-    .addStringOption(option =>
-      option.setName('excludechannels')
-        .setDescription('Comma-separated list of channels to exclude')
-        .setRequired(false))
-    .addStringOption(option =>
-      option.setName('excludecategories')
-        .setDescription('Comma-separated list of category IDs to exclude')
-        .setRequired(false)),
-  async execute(interaction, { redisClient }) {
-    await interaction.deferReply({ ephemeral: true });
+  name: 'configwelcomechannel',
+  userPerms: ['manageWebhooks', 'manageChannels', 'viewAuditLogs'],
+  botPerms: ['sendMessages'],
+  noThread: true,
+  quickHelp: 'Configures welcome channel permissions and exclusions.',
+  examples: '!configwelcomechannel @NegRole @PosRole #welcome [excludeChannels] [excludeCategories]',
+  category: 'Configuration',
+  func: async interaction => {
+    // Expect options: negativerole, positiverole, welcomechannel, excluderoles, excludecategories
+    const negRoleOpt = interaction.data.options.find(o => o.name === 'negativerole');
+    const posRoleOpt = interaction.data.options.find(o => o.name === 'positiverole');
+    const channelOpt = interaction.data.options.find(o => o.name === 'welcomechannel');
+    if (!negRoleOpt || !posRoleOpt || !channelOpt) {
+      return interaction.createMessage({ content: 'You must specify a negative role, positive role, and welcome channel.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    const negRole = negRoleOpt.value;
+    const posRole = posRoleOpt.value;
+    const welcomeChannel = channelOpt.value;
+    const excludeRoles = interaction.data.options.find(o => o.name === 'excluderoles')?.value || "";
+    const excludeCategories = interaction.data.options.find(o => o.name === 'excludecategories')?.value || "";
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.followUp({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    config.welcome_channel = interaction.options.getChannel('welcomechannel').id;
-    config.exclude_channels = interaction.options.getString('excludechannels') || "";
-    config.exclude_categories = interaction.options.getString('excludecategories') || "";
+    config.welcome_channel = welcomeChannel;
+    config.exclude_channels = excludeRoles;
+    config.exclude_categories = excludeCategories;
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.followUp({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.followUp({ content: 'Welcome channel configuration updated.', ephemeral: true });
-  },
-  quickHelp: 'Configures welcome channel permissions (excludes certain channels/categories).',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}configwelcomechannel @NegRole @PosRole #welcome\``,
-  category: 'Configuration'
+    return interaction.createMessage({ content: 'Welcome channel configuration updated.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

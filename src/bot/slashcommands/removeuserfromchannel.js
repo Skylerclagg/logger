@@ -1,29 +1,27 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('removeuserfromchannel')
-    .setDescription('Remove a user from a channel (permission controlled).')
-    .addChannelOption(option =>
-      option.setName('channel')
-        .setDescription('Channel to remove the user from')
-        .setRequired(true))
-    .addUserOption(option =>
-      option.setName('user')
-        .setDescription('User to remove from the channel')
-        .setRequired(true)),
-  async execute(interaction) {
-    const channel = interaction.options.getChannel('channel');
-    const target = interaction.options.getMember('user');
+  name: 'removeuserfromchannel',
+  userPerms: ['manageChannels'],
+  botPerms: ['manageChannels'],
+  noThread: false,
+  quickHelp: 'Removes a user from a channel by modifying view permissions.',
+  examples: '!removeuserfromchannel #general @User',
+  category: 'Management',
+  func: async interaction => {
+    const channelOption = interaction.data.options.find(o => o.name === 'channel');
+    const userOption = interaction.data.options.find(o => o.name === 'user');
+    if (!channelOption || !userOption) {
+      return interaction.createMessage({ content: 'Please specify both a channel and a user.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    const channelId = channelOption.value;
+    const targetId = userOption.value;
+    const guild = global.bot.guilds.get(interaction.guildID);
     try {
-      await channel.permissionOverwrites.edit(target, { VIEW_CHANNEL: false });
-      await interaction.reply({ content: `${target} was removed from ${channel.toString()}.`, ephemeral: true });
+      await guild.editChannelPermission(channelId, targetId, { VIEW_CHANNEL: false }, 0, 'add');
+      return interaction.createMessage({ content: `<@${targetId}> was removed from <#${channelId}>.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
     } catch (err) {
       console.error(err);
-      await interaction.reply({ content: `Failed to remove user from channel: ${err}`, ephemeral: true });
+      return interaction.createMessage({ content: `Failed to remove user from channel: ${err}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-  },
-  quickHelp: 'Removes a user from a channel by modifying permission overwrites.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}removeuserfromchannel #general @User\``,
-  category: 'Management'
+  }
 };

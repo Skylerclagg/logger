@@ -1,26 +1,24 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('listmodroles')
-    .setDescription('List mod roles.'),
-  async execute(interaction, { redisClient }) {
+  name: 'listmodroles',
+  userPerms: [],
+  botPerms: [],
+  noThread: false,
+  quickHelp: 'Lists all mod roles.',
+  examples: '!listmodroles',
+  category: 'Management',
+  func: async interaction => {
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
     const modRoles = config.mod_roles || [];
-    if (modRoles.length === 0) {
-      return interaction.reply({ content: 'No mod roles have been set.', ephemeral: true });
-    }
-    const roles = modRoles.map(id => interaction.guild.roles.cache.get(id)?.toString() || id);
-    await interaction.reply({ content: `Mod roles: ${roles.join(', ')}`, ephemeral: true });
-  },
-  quickHelp: 'Lists all mod roles.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}listmodroles\``,
-  category: 'Management'
+    if (modRoles.length === 0) return interaction.createMessage({ content: 'No mod roles have been set.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const rolesText = modRoles.map(id => `<@&${id}>`).join(', ');
+    return interaction.createMessage({ content: `Mod roles: ${rolesText}`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

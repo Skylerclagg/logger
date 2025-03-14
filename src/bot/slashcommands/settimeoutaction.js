@@ -1,37 +1,34 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('settimeoutaction')
-    .setDescription('Set action on timeout: kick, restrict, or remind.')
-    .addStringOption(option =>
-      option.setName('action')
-        .setDescription('Action to take on timeout')
-        .setRequired(true)
-        .addChoices(
-          { name: 'kick', value: 'kick' },
-          { name: 'restrict', value: 'restrict' },
-          { name: 'remind', value: 'remind' }
-        )),
-  async execute(interaction, { redisClient }) {
+  name: 'settimeoutaction',
+  userPerms: ['manageChannels'],
+  botPerms: ['sendMessages'],
+  noThread: false,
+  quickHelp: 'Sets the action on verification timeout (kick, restrict, or remind).',
+  examples: '!settimeoutaction remind',
+  category: 'Configuration',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'action');
+    if (!option) return interaction.createMessage({ content: 'You must provide an action (kick, restrict, remind).', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const action = option.value.toLowerCase();
+    if (!['kick', 'restrict', 'remind'].includes(action)) {
+      return interaction.createMessage({ content: 'Invalid action. Use kick, restrict, or remind.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    config.timeout_action = interaction.options.getString('action');
+    config.timeout_action = action;
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Timeout action set to **${config.timeout_action}**.`, ephemeral: true });
-  },
-  quickHelp: 'Sets the action to take on verification timeout (kick, restrict, or remind).',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}settimeoutaction remind\``,
-  category: 'Configuration'
+    return interaction.createMessage({ content: `Timeout action set to **${action}**.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

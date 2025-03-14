@@ -1,32 +1,31 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('setrolegiven')
-    .setDescription('Set role to assign to new users.')
-    .addRoleOption(option =>
-      option.setName('role')
-        .setDescription('The role to assign')
-        .setRequired(true)),
-  async execute(interaction, { redisClient }) {
+  name: 'setrolegiven',
+  userPerms: ['manageChannels'],
+  botPerms: ['manageRoles'],
+  noThread: false,
+  quickHelp: 'Sets the role to assign to new users upon verification.',
+  examples: '!setrolegiven @Verified',
+  category: 'Configuration',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'role');
+    if (!option) return interaction.createMessage({ content: 'You must specify a role.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const roleId = option.value;
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    config.role_given = interaction.options.getRole('role').id;
+    config.role_given = roleId;
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Verification role set to: ${interaction.options.getRole('role').toString()}`, ephemeral: true });
-  },
-  quickHelp: 'Sets the verified role (assigned upon successful verification).',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}setrolegiven @Verified\``,
-  category: 'Configuration'
+    return interaction.createMessage({ content: `Verified role set to: <@&${roleId}>`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

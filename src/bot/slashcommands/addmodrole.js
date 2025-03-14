@@ -1,36 +1,32 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const Eris = require('eris');
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('addmodrole')
-    .setDescription('Add a mod role.')
-    .addRoleOption(option =>
-      option.setName('role')
-        .setDescription('Role to add as a mod role')
-        .setRequired(true)),
-  async execute(interaction, { redisClient }) {
+  name: 'addmodrole',
+  userPerms: ['manageChannels'],
+  botPerms: ['manageRoles'],
+  noThread: false,
+  quickHelp: 'Adds a mod role.',
+  examples: '!addmodrole @ModRole',
+  category: 'Management',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'role');
+    if (!option) return interaction.createMessage({ content: 'You must specify a role.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    const roleId = option.value;
     let config;
     try {
-      const data = await redisClient.get(`guild_config:${interaction.guild.id}`);
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
       config = data ? JSON.parse(data) : {};
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to retrieve configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
     config.mod_roles = config.mod_roles || [];
-    const role = interaction.options.getRole('role');
-    if (!config.mod_roles.includes(role.id)) {
-      config.mod_roles.push(role.id);
-    }
+    if (!config.mod_roles.includes(roleId)) config.mod_roles.push(roleId);
     try {
-      await redisClient.set(`guild_config:${interaction.guild.id}`, JSON.stringify(config));
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: 'Failed to save configuration.', ephemeral: true });
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-    await interaction.reply({ content: `Added mod role: ${role.toString()}`, ephemeral: true });
-  },
-  quickHelp: 'Adds a mod role.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}addmodrole @Mod\``,
-  category: 'Management'
+    return interaction.createMessage({ content: `Added mod role: <@&${roleId}>`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
 };

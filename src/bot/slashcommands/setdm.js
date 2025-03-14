@@ -1,20 +1,33 @@
+const Eris = require('eris');
 module.exports = {
-    name: 'setdm',
-    quickHelp: 'Enables or disables DM verification.',
-    examples: `\`${process.env.GLOBAL_BOT_PREFIX}setdm true\` or \`${process.env.GLOBAL_BOT_PREFIX}setdm false\``,
-    category: 'Configuration',
-    func: async (message, args) => {
-      const enabled = args[0]?.toLowerCase() === 'true';
-      try {
-        let config = await global.redisClient.get(`guild_config:${message.guild.id}`);
-        config = config ? JSON.parse(config) : {};
-        config.dm_enabled = enabled;
-        await global.redisClient.set(`guild_config:${message.guild.id}`, JSON.stringify(config));
-        message.channel.createMessage(`DM verification has been ${enabled ? 'enabled' : 'disabled'}.`);
-      } catch (err) {
-        console.error(err);
-        message.channel.createMessage(`Failed to set DM verification: ${err}`);
-      }
+  name: 'setdm',
+  userPerms: ['manageChannels'],
+  botPerms: ['sendMessages'],
+  noThread: false,
+  quickHelp: 'Enables or disables DM verification.',
+  examples: '!setdm true',
+  category: 'Configuration',
+  func: async interaction => {
+    const option = interaction.data.options.find(o => o.name === 'enabled');
+    if (option === undefined) {
+      return interaction.createMessage({ content: 'Please provide true or false.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
     }
-  };
-  
+    const enabled = option.value === true;
+    let config;
+    try {
+      const data = await global.redisClient.get(`guild_config:${interaction.guildID}`);
+      config = data ? JSON.parse(data) : {};
+    } catch (err) {
+      console.error(err);
+      return interaction.createMessage({ content: 'Failed to retrieve configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    config.dm_enabled = enabled;
+    try {
+      await global.redisClient.set(`guild_config:${interaction.guildID}`, JSON.stringify(config));
+    } catch (err) {
+      console.error(err);
+      return interaction.createMessage({ content: 'Failed to save configuration.', flags: Eris.Constants.MessageFlags.EPHEMERAL });
+    }
+    return interaction.createMessage({ content: `DM verification has been ${enabled ? 'enabled' : 'disabled'}.`, flags: Eris.Constants.MessageFlags.EPHEMERAL });
+  }
+};
